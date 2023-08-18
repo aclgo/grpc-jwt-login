@@ -1,4 +1,4 @@
 package repository
 
-type RedisRepo struct {
+type redisRepo struct {
 }

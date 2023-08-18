@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type User struct {
 	Id        string    `json:"id"`
@@ -11,10 +13,4 @@ type User struct {
 	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-}
-
-type TokenJwtUserPayload struct {
-	UserID   string        `json:"user_id"`
-	ExpireAt time.Duration `json:"expire_at"`
-	Role     string        `json:"role"`
 }

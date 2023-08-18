@@ -24,4 +24,6 @@ type UserUC interface {
 	FindAll()
 	Update()
 	Delete()
+	Login()
+	Logout()
 }

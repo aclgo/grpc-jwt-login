@@ -1,3 +1,3 @@
 package repository
 
-type PostgresRepo struct{}
+type postgresRepo struct{}
