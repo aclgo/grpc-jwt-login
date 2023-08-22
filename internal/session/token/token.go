@@ -1,4 +1,4 @@
-package jwt
+package token
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ type tokenAction struct {
 	SecretKey string
 }
 
-func NewJwt(secretKey string) *tokenAction {
+func NewtokenAction(secretKey string) *tokenAction {
 	return &tokenAction{
 		SecretKey: secretKey,
 	}

@@ -3,6 +3,10 @@ package config
 import "time"
 
 type Config struct {
+	ApiVersion  string
+	SecretKey   string
+	LogLevel    string
+	LogEncoding string
 	Server
 	Database
 	Redis

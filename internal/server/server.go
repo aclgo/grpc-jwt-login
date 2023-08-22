@@ -1,10 +1,20 @@
 package server
 
 import (
+	"fmt"
+	"net"
+
 	"github.com/aclgo/grpc-jwt/config"
+	"github.com/aclgo/grpc-jwt/internal/interceptor"
+	sessionUC "github.com/aclgo/grpc-jwt/internal/session/usecase"
+	"github.com/aclgo/grpc-jwt/internal/user/delivery/grpc/service"
+	userRepo "github.com/aclgo/grpc-jwt/internal/user/repository"
+	userUC "github.com/aclgo/grpc-jwt/internal/user/usecase"
 	"github.com/aclgo/grpc-jwt/pkg/logger"
 	"github.com/go-redis/redis"
 	"github.com/jmoiron/sqlx"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/profiling/proto"
 )
 
 type Server struct {
@@ -25,5 +35,40 @@ func NewServer(db *sqlx.DB, redisClient *redis.Client,
 }
 
 func (s *Server) Run() error {
+	interceptor := interceptor.NewInterceptor(s.logger)
+
+	sessUC := sessionUC.NewSessionUC(s.logger, s.redisClient, s.config.SecretKey)
+	usRepo := userRepo.NewPostgresRepo(s.db)
+	usUC := userUC.NewUserUC(s.logger, usRepo, nil, sessUC)
+
+	userService := service.NewUserService(s.logger, usUC)
+
+	listen, err := net.Listen("tcp", ":"+s.config.Server.Port)
+	if err != nil {
+		s.logger.Errorf("net.Listen: %v", err)
+	}
+
+	opts := []grpc.ServerOption{
+		// grpc.KeepaliveParams(grpc.KeepaliveParams{
+		// 	grpc.MaxConnectionIdle:
+		// 	TIMeout:
+		// MaxConnectionAge:
+		// Time:
+		// }),
+		grpc.UnaryInterceptor(interceptor.Logger),
+		// grpc.ChainUnaryInterceptor(
+		// 	grpc_ctxtags.UnaryServerInterceptor(),
+		// 	grpc_prometheus.UnaryServerInterceptor(),
+		// 	grpc_recovery.UnaryServerInterceptor(),
+		// ),
+	}
+
+	server := grpc.NewServer(opts...)
+	proto.RegisterProfilingServer(server, userService)
+
+	if err := server.Serve(listen); err != nil {
+		return fmt.Errorf("Run.NewServer: %v", err)
+	}
+
 	return nil
 }

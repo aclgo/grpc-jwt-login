@@ -1,23 +1,23 @@
-package jwt
+package token
 
 import (
 	"testing"
 	"time"
 )
 
-func TestFunctionsJwtToken(t *testing.T) {
+func TestCreateJwtToken(t *testing.T) {
 	fakeUserID := "my-fake-user-id"
 	fakeUserRole := "admin"
-	ttl := time.Nanosecond
+	ttl := time.Hour
 
-	jwtObj := NewJwt("my-test-secret")
+	tkAction := NewtokenAction("my-test-secret")
 
-	tokenString, err := jwtObj.NewToken("access", fakeUserID, fakeUserRole, ttl)
+	tokenString, err := tkAction.NewToken("access", fakeUserID, fakeUserRole, ttl)
 	if err != nil {
 		t.Error(err)
 	}
 
-	tokenParsed, err := jwtObj.ParseToken(tokenString)
+	tokenParsed, err := tkAction.ParseToken(tokenString)
 	if err != nil {
 		t.Error(err)
 	}
@@ -26,7 +26,7 @@ func TestFunctionsJwtToken(t *testing.T) {
 		t.Error("token invalid")
 	}
 
-	claims, err := jwtObj.GetClaims(tokenParsed)
+	claims, err := tkAction.GetClaims(tokenParsed)
 	if err != nil {
 		t.Error("GetClaims")
 	}
