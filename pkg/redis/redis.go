@@ -7,9 +7,9 @@ import (
 
 func NewRedisClient(c *config.Config) *redis.Client {
 	client := redis.NewClient(&redis.Options{
-		Addr:     c.Redis.Url,
-		DB:       c.Redis.DB,
-		Password: c.Redis.Pass,
+		Addr:     c.RedisAddr,
+		DB:       c.RedisDB,
+		Password: c.RedisPass,
 		PoolSize: 100,
 	})
 

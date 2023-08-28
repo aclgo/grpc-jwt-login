@@ -1,4 +1,7 @@
 package repository
 
-type RedisRepo struct {
+import "github.com/go-redis/redis"
+
+type redisRepo struct {
+	redisClient *redis.Client
 }
