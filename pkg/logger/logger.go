@@ -29,7 +29,7 @@ type logger struct {
 	sugaredLogger *zap.SugaredLogger
 }
 
-func NewLogger(cfg *config.Config) *logger {
+func NewapiLogger(cfg *config.Config) *logger {
 	return &logger{
 		config: cfg,
 	}
@@ -59,14 +59,20 @@ func (l *logger) InitLogger() {
 
 	logWriter := zapcore.AddSync(os.Stderr)
 
-	encConfig := zapcore.EncoderConfig{
-		LevelKey:   "LEVEL",
-		CallerKey:  "CALLER",
-		TimeKey:    "TIME",
-		NameKey:    "NAME",
-		MessageKey: "MESSAGE",
-		EncodeTime: zapcore.ISO8601TimeEncoder,
+	var encConfig zapcore.EncoderConfig
+
+	if l.config.ServerMode == "dev" {
+		encConfig = zap.NewDevelopmentEncoderConfig()
+	} else {
+		encConfig = zap.NewProductionEncoderConfig()
 	}
+
+	encConfig.LevelKey = "LEVEL"
+	encConfig.CallerKey = "CALLER"
+	encConfig.TimeKey = "TIME"
+	encConfig.NameKey = "NAME"
+	encConfig.MessageKey = "MESSAGE"
+	encConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
 	var encoder zapcore.Encoder
 

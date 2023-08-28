@@ -59,7 +59,7 @@ message FindByIdResponse{
 }
 
 message FindByEmailRequest{
-    string id = 1;
+    string email = 1;
 }
 
 message FindByEmailResponse{
@@ -73,3 +73,4 @@ service UserService {
     rpc FindById(FindByIdRequest) returns (FindByIdResponse);
     rpc FindByEmail(FindByEmailRequest) returns (FindByEmailResponse);
 }
+

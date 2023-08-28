@@ -43,7 +43,8 @@ func (s *Server) Run() error {
 
 	userService := service.NewUserService(s.logger, usUC)
 
-	listen, err := net.Listen("tcp", ":"+s.config.Server.Port)
+	listen, err := net.Listen("tcp", "localhost:"+s.config.ServerPort)
+	// fmt.Println(s.config.ServerPort)
 	if err != nil {
 		s.logger.Errorf("net.Listen: %v", err)
 	}
@@ -65,7 +66,7 @@ func (s *Server) Run() error {
 
 	server := grpc.NewServer(opts...)
 	proto.RegisterProfilingServer(server, userService)
-
+	s.logger.Infof("server starting port %s", s.config.ServerPort)
 	if err := server.Serve(listen); err != nil {
 		return fmt.Errorf("Run.NewServer: %v", err)
 	}

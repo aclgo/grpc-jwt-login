@@ -5,11 +5,12 @@ import (
 	"fmt"
 
 	"github.com/aclgo/grpc-jwt/config"
+	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
 )
 
 func Connect(cfg *config.Config) (*sqlx.DB, error) {
-	conn, err := sqlx.Connect(cfg.Database.Driver, cfg.Database.Url)
+	conn, err := sqlx.Connect(cfg.DatabaseDriver, cfg.DatabaseUrl)
 	if err != nil {
 		return nil, fmt.Errorf("sqlx.Connect %v", err)
 	}

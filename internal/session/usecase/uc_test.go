@@ -6,6 +6,7 @@ import (
 	"log"
 	"testing"
 
+	"github.com/aclgo/grpc-jwt/config"
 	"github.com/aclgo/grpc-jwt/pkg/logger"
 	"github.com/alicebob/miniredis"
 	"github.com/go-redis/redis"
@@ -29,7 +30,7 @@ func SetupRedisTest() *redis.Client {
 func TestCreateTTK(t *testing.T) {
 	t.Parallel()
 
-	logger := logger.NewLogger(nil)
+	logger := logger.NewapiLogger(nil)
 	redisClient := SetupRedisTest()
 	fakeUserID := uuid.NewString()
 	fakeRole := "fake-admin"
@@ -46,7 +47,7 @@ func TestCreateTTK(t *testing.T) {
 func TestValidTTK(t *testing.T) {
 	t.Parallel()
 
-	logger := logger.NewLogger(nil)
+	logger := logger.NewapiLogger(nil)
 	redisClient := SetupRedisTest()
 	fakeUserID := uuid.NewString()
 	fakeRole := "fake-admin"
@@ -66,7 +67,7 @@ func TestValidTTK(t *testing.T) {
 func TestRefreshTTK(t *testing.T) {
 	t.Parallel()
 
-	logger := logger.NewLogger(nil)
+	logger := logger.NewapiLogger(nil)
 	redisClient := SetupRedisTest()
 	fakeUserID := uuid.NewString()
 	fakeRole := "fake-admin"
@@ -85,7 +86,7 @@ func TestRefreshTTK(t *testing.T) {
 func TestRevogeTTK(t *testing.T) {
 	t.Parallel()
 
-	logger := logger.NewLogger(nil)
+	logger := logger.NewapiLogger(nil)
 	redisClient := SetupRedisTest()
 	fakeUserID := uuid.NewString()
 	fakeRole := "fake-admin"
@@ -107,10 +108,11 @@ func TestRevogedTTK(t *testing.T) {
 
 	t.Parallel()
 
-	logger := logger.NewLogger(nil)
+	logger := logger.NewapiLogger(&config.Config{})
 	redisClient := SetupRedisTest()
 	fakeUserID := uuid.NewString()
 	fakeRole := "fake-admin"
+
 	sessUC := NewSessionUC(logger, redisClient, "secrey")
 	t.Run("Verify if Revoged tokens", func(t *testing.T) {
 

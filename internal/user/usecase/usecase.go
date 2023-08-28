@@ -11,7 +11,13 @@ import (
 	session "github.com/aclgo/grpc-jwt/internal/session"
 	"github.com/aclgo/grpc-jwt/internal/user"
 	"github.com/aclgo/grpc-jwt/pkg/logger"
+
 	"github.com/google/uuid"
+)
+
+var (
+	ErrPasswordIncorrect = errors.New("password incorrect")
+	ErrEmailCadastred    = errors.New("email cadastred")
 )
 
 type userUC struct {
@@ -35,10 +41,12 @@ func NewUserUC(logger logger.Logger,
 func (u *userUC) Register(ctx context.Context, params *user.ParamsCreateUser) (*user.ParamsOutputUser, error) {
 	foundUser, err := u.userRepoDatabase.FindByEmail(ctx, params.Email)
 	if foundUser != nil {
-		return nil, errors.New("Register.FindByEmail: email cadastred")
+		u.logger.Errorf("Register.FindByEmail: %v", ErrEmailCadastred)
+		return nil, fmt.Errorf("Register.FindByEmail: %v", ErrEmailCadastred)
 	}
 
 	if err != sql.ErrNoRows {
+		u.logger.Errorf("Register.FindByEmail: %v", err)
 		return nil, fmt.Errorf("Register.FindByEmail: %v", err)
 	}
 
@@ -54,8 +62,8 @@ func (u *userUC) Register(ctx context.Context, params *user.ParamsCreateUser) (*
 	})
 
 	if err != nil {
-		// u.logger.Errorf("u.userRepoDatabase.Add: %v", err)
-		return nil, fmt.Errorf("u.userRepoDatabase.Add: %v", err)
+		u.logger.Errorf("Register.Add: %v", err)
+		return nil, fmt.Errorf("Register.Add: %v", err)
 	}
 
 	return user.Dto(created), nil
@@ -64,15 +72,18 @@ func (u *userUC) Register(ctx context.Context, params *user.ParamsCreateUser) (*
 func (u *userUC) Login(ctx context.Context, email string, password string) (*models.Tokens, error) {
 	foundUser, err := u.userRepoDatabase.FindByEmail(ctx, email)
 	if err != nil {
+		u.logger.Errorf("Login.FindByEmail: %v", err)
 		return nil, fmt.Errorf("Login.FindByEmail: %v", err)
 	}
 
 	if err := foundUser.ComparePass(password); err != nil {
-		return nil, errors.New("password incorrect")
+		u.logger.Errorf("Login: %v", ErrPasswordIncorrect)
+		return nil, ErrPasswordIncorrect
 	}
 
 	tokens, err := u.jwtSession.CreateTokens(ctx, foundUser.Id, foundUser.Role)
 	if err != nil {
+		u.logger.Errorf("Login.CreateTokens: %v", err)
 		return nil, fmt.Errorf("Login.CreateTokens: %v", err)
 	}
 
@@ -85,6 +96,7 @@ func (u *userUC) Login(ctx context.Context, email string, password string) (*mod
 func (u *userUC) Logout(ctx context.Context, accessTTK string, refreshTTK string) error {
 	err := u.jwtSession.RevogeToken(ctx, accessTTK, refreshTTK)
 	if err != nil {
+		u.logger.Errorf("Logout.RevogeToken: %v", err)
 		return fmt.Errorf("Logout.RevogeToken: %v", err)
 	}
 
@@ -94,6 +106,7 @@ func (u *userUC) Logout(ctx context.Context, accessTTK string, refreshTTK string
 func (u *userUC) FindByID(ctx context.Context, userID string) (*user.ParamsOutputUser, error) {
 	foundUser, err := u.userRepoDatabase.FindByID(ctx, userID)
 	if err != nil {
+		u.logger.Errorf("FindByID: %v", err)
 		return nil, fmt.Errorf("FindByID: %v", err)
 	}
 
@@ -102,6 +115,7 @@ func (u *userUC) FindByID(ctx context.Context, userID string) (*user.ParamsOutpu
 func (u *userUC) FindByEmail(ctx context.Context, userEmail string) (*user.ParamsOutputUser, error) {
 	foundUser, err := u.userRepoDatabase.FindByEmail(ctx, userEmail)
 	if err != nil {
+		u.logger.Errorf("FindByEmail: %v", err)
 		return nil, fmt.Errorf("FindByEmail: %v", err)
 	}
 	return user.Dto(foundUser), nil

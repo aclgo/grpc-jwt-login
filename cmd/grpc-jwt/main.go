@@ -2,28 +2,36 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/aclgo/grpc-jwt/config"
 	"github.com/aclgo/grpc-jwt/internal/server"
+
 	"github.com/aclgo/grpc-jwt/pkg/logger"
 	"github.com/aclgo/grpc-jwt/pkg/postgres"
 	rredis "github.com/aclgo/grpc-jwt/pkg/redis"
 )
 
 func main() {
-	fmt.Println("grpc-jwt")
+	cfg, err := config.Load(".")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	cfg := config.Config{}
-	logger := logger.NewLogger(&cfg)
+	fmt.Println("config loading")
 
-	db, err := postgres.Connect(&cfg)
+	logger := logger.NewapiLogger(cfg)
+	logger.InitLogger()
+	logger.Info("logger initialized")
+
+	db, err := postgres.Connect(cfg)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	redisClient := rredis.NewRedisClient(&cfg)
+	redisClient := rredis.NewRedisClient(cfg)
 
-	server := server.NewServer(db, redisClient, logger, &cfg)
+	server := server.NewServer(db, redisClient, logger, cfg)
 
 	logger.Fatal(server.Run())
 

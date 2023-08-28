@@ -3,32 +3,17 @@ package config
 import "time"
 
 type Config struct {
-	ApiVersion  string
-	SecretKey   string
-	LogLevel    string
-	LogEncoding string
-	Server
-	Database
-	Redis
-}
-
-type Server struct {
-	AppVersion string `mapstructure:"APP_VERSION"`
-	Mode       string `mapstructure:"SERVER_MODE"`
-	Port       string `mapstructure:"SERVER_PORT"`
-}
-
-type Database struct {
-	Url    string `mapstructure:"DATABASE_URL"`
-	Driver string
-}
-
-type Redis struct {
-	Addr string `mapstructure:"REDIS_ADDR"`
-	DB   int    `mapstructure:"SERVER_PORT"`
-	Pass string
-}
-
-type Jwt struct {
-	ExpirateToken time.Duration
+	ApiVersion     string        `mapstructure:"API_VERSION"`
+	SecretKey      string        `mapstructure:"SECRET_KEY"`
+	LogLevel       string        `mapstructure:"LOG_LEVEL"`
+	LogEncoding    string        `mapstructure:"LOG_ENCODING"`
+	AppVersion     string        `mapstructure:"APP_VERSION"`
+	ServerMode     string        `mapstructure:"SERVER_MODE"`
+	ServerPort     string        `mapstructure:"SERVER_PORT"`
+	DatabaseUrl    string        `mapstructure:"DATABASE_URL"`
+	DatabaseDriver string        `mapstructure:"DRIVER_DATABASE"`
+	RedisAddr      string        `mapstructure:"REDIS_ADDR"`
+	RedisDB        int           `mapstructure:"REDIS_DB"`
+	RedisPass      string        `mapstructure:"REDIS_PASS"`
+	ExpirateToken  time.Duration `mapstructure:"EXPIRATE_TOKEN"`
 }

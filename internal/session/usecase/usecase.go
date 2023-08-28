@@ -10,6 +10,7 @@ import (
 	sessionRepo "github.com/aclgo/grpc-jwt/internal/session/repository"
 	sessionToken "github.com/aclgo/grpc-jwt/internal/session/token"
 	"github.com/aclgo/grpc-jwt/pkg/logger"
+
 	"github.com/go-redis/redis"
 	"github.com/golang-jwt/jwt"
 )
@@ -48,21 +49,25 @@ func (s *sessionUC) RefreshToken(ctx context.Context, accessTTK, refreshTTK stri
 
 	parsedAccess, err := s.tokenAction.ParseToken(accessTTK)
 	if err != nil {
+		s.logger.Errorf("RefreshToken.ParseToken: %v", err)
 		return nil, fmt.Errorf("RefreshToken.ParseToken: %v", err)
 	}
 
 	parsedRefresh, err := s.tokenAction.ParseToken(refreshTTK)
 	if err != nil {
+		s.logger.Errorf("RefreshToken.ParseToken: %v", err)
 		return nil, fmt.Errorf("RefreshToken.ParseToken: %v", err)
 	}
 
 	claimsAccess, err := s.tokenAction.GetClaims(parsedAccess)
 	if err != nil {
+		s.logger.Errorf("RefreshToken.GetClaims: %v", err)
 		return nil, fmt.Errorf("RefreshToken.GetClaims: %v", err)
 	}
 
 	claimsRefresh, err := s.tokenAction.GetClaims(parsedRefresh)
 	if err != nil {
+		s.logger.Errorf("RefreshToken.GetClaims: %v", err)
 		return nil, fmt.Errorf("RefreshToken.GetClaims: %v", err)
 	}
 
@@ -82,16 +87,19 @@ func (s *sessionUC) RefreshToken(ctx context.Context, accessTTK, refreshTTK stri
 func (s *sessionUC) ValidToken(ctx context.Context, ttkString string) (jwt.MapClaims, error) {
 	parsedAccess, err := s.tokenAction.ParseToken(ttkString)
 	if err != nil {
+		s.logger.Error(ErrInvalidToken)
 		return nil, ErrInvalidToken
 	}
 
 	claimsAccess, err := s.tokenAction.GetClaims(parsedAccess)
 	if err != nil {
+		s.logger.Error(ErrInvalidToken)
 		return nil, ErrInvalidToken
 	}
 
 	expUnix := claimsAccess["exp"].(float64)
 	if s.tokenAction.IsExpired(expUnix) {
+		s.logger.Error(ErrTokenExpired)
 		return nil, ErrTokenExpired
 	}
 
@@ -99,6 +107,7 @@ func (s *sessionUC) ValidToken(ctx context.Context, ttkString string) (jwt.MapCl
 		return claimsAccess, nil
 	}
 
+	s.logger.Error(ErrTokenRevoged)
 	return nil, ErrTokenRevoged
 }
 
@@ -110,6 +119,7 @@ func (s *sessionUC) RevogeToken(ctx context.Context, ttkAccess, ttkRefresh strin
 
 	parsedTTK, err := s.tokenAction.GetClaims(token)
 	if err != nil {
+		s.logger.Errorf("RevogeToken.GetClaims: %v", err)
 		return fmt.Errorf("RevogeToken.GetClaims: %v", err)
 	}
 
@@ -119,6 +129,7 @@ func (s *sessionUC) RevogeToken(ctx context.Context, ttkAccess, ttkRefresh strin
 	timeRestant := exp - float64(now)
 
 	if s.tokenRepo.Set(ctx, ttkAccess, time.Duration(timeRestant)*time.Second); err != nil {
+		s.logger.Errorf("RevogeToken.Set: %v", err)
 		return fmt.Errorf("RevogeToken.Set: %v", err)
 	}
 
@@ -130,7 +141,7 @@ func (s *sessionUC) VerifyRevogedToken(ctx context.Context, ttkString string) er
 	if err == redis.Nil {
 		return nil
 	}
-
+	s.logger.Error(ErrTokenRevoged)
 	return ErrTokenRevoged
 }
 

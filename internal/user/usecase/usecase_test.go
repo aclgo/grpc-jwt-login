@@ -38,7 +38,7 @@ func TestRegister(t *testing.T) {
 	defer ctrl.Finish()
 
 	userPGRepo := mock.NewMockUserPGRepo(ctrl)
-	logger := logger.NewLogger(nil)
+	logger := logger.NewapiLogger(nil)
 
 	sessUC := sessionUC.NewSessionUC(logger, setupRedis(), "my-secret-key")
 
@@ -85,7 +85,7 @@ func TestFindByID(t *testing.T) {
 	defer ctrl.Finish()
 
 	userPGRepo := mock.NewMockUserPGRepo(ctrl)
-	logger := logger.NewLogger(nil)
+	logger := logger.NewapiLogger(nil)
 
 	sessUC := sessionUC.NewSessionUC(logger, setupRedis(), "my-secret-key")
 
@@ -119,7 +119,7 @@ func TestFindByEmail(t *testing.T) {
 	defer ctrl.Finish()
 
 	userPGRepo := mock.NewMockUserPGRepo(ctrl)
-	logger := logger.NewLogger(nil)
+	logger := logger.NewapiLogger(nil)
 
 	sessUC := sessionUC.NewSessionUC(logger, setupRedis(), "my-secret-key")
 
