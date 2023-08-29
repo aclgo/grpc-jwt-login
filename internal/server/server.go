@@ -11,10 +11,10 @@ import (
 	userRepo "github.com/aclgo/grpc-jwt/internal/user/repository"
 	userUC "github.com/aclgo/grpc-jwt/internal/user/usecase"
 	"github.com/aclgo/grpc-jwt/pkg/logger"
+	"github.com/aclgo/grpc-jwt/proto"
 	"github.com/go-redis/redis"
 	"github.com/jmoiron/sqlx"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/profiling/proto"
 )
 
 type Server struct {
@@ -65,7 +65,7 @@ func (s *Server) Run() error {
 	}
 
 	server := grpc.NewServer(opts...)
-	proto.RegisterProfilingServer(server, userService)
+	proto.RegisterUserServiceServer(server, userService)
 	s.logger.Infof("server starting port %s", s.config.ServerPort)
 	if err := server.Serve(listen); err != nil {
 		return fmt.Errorf("Run.NewServer: %v", err)

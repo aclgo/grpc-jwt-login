@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/aclgo/grpc-jwt/proto" // Import your generated proto package
 	"google.golang.org/grpc"
@@ -26,18 +27,18 @@ func main() {
 	client := proto.NewUserServiceClient(conn)
 
 	// Make a gRPC call
-	// createUserReq := &proto.CreateUserRequest{
-	// 	Email:    "dolor",
-	// 	LastName: "ut",
-	// 	Name:     "laboris",
-	// 	Password: "laborum",
-	// 	Role:     "Lorem",
-	// }
+	createUserReq := &proto.CreateUserRequest{
+		Email:    "dolor",
+		LastName: "ut",
+		Name:     "laboris",
+		Password: "laborum",
+		Role:     "Lorem",
+	}
 
-	// ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	// defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	resp, err := client.Login(context.Background(), &proto.UserLoginRequest{}, []grpc.CallOption{}...)
+	resp, err := client.Register(ctx, createUserReq, []grpc.CallOption{}...)
 	if err != nil {
 		log.Fatalf("Failed to register user: %v", err)
 	}

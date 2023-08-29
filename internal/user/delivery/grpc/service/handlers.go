@@ -13,6 +13,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+func (us *UserService) mustEmbedUnimplementedUserServiceServer() {}
+
 func (us *UserService) Register(ctx context.Context, req *proto.CreateUserRequest) (*proto.CreatedUserResponse, error) {
 	params := user.ParamsCreateUser{
 		Name:     req.Name,
