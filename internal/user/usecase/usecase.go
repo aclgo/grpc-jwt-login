@@ -2,22 +2,29 @@ package usecase
 
 import (
 	"context"
-	"database/sql"
-	"errors"
+
 	"fmt"
 	"time"
 
 	"github.com/aclgo/grpc-jwt/internal/models"
 	session "github.com/aclgo/grpc-jwt/internal/session"
 	"github.com/aclgo/grpc-jwt/internal/user"
+	"github.com/aclgo/grpc-jwt/internal/utils"
 	"github.com/aclgo/grpc-jwt/pkg/logger"
-
+	"github.com/go-redis/redis"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
+)
+
+const (
+	ClientRole = "client"
 )
 
 var (
 	ErrPasswordIncorrect = errors.New("password incorrect")
 	ErrEmailCadastred    = errors.New("email cadastred")
+	ErrInvalidEmail      = errors.New("email invalid")
+	ErrPasswordSmall     = errors.New("password small lenght")
 )
 
 type userUC struct {
@@ -39,24 +46,24 @@ func NewUserUC(logger logger.Logger,
 }
 
 func (u *userUC) Register(ctx context.Context, params *user.ParamsCreateUser) (*user.ParamsOutputUser, error) {
-	foundUser, err := u.userRepoDatabase.FindByEmail(ctx, params.Email)
+	if !utils.ValidMail(params.Email) {
+		u.logger.Errorf("Register.FindByEmail: %v", ErrInvalidEmail)
+		return nil, fmt.Errorf("Register.FindByEmail: %v", ErrInvalidEmail)
+	}
+
+	foundUser, _ := u.userRepoDatabase.FindByEmail(ctx, params.Email)
 	if foundUser != nil {
 		u.logger.Errorf("Register.FindByEmail: %v", ErrEmailCadastred)
 		return nil, fmt.Errorf("Register.FindByEmail: %v", ErrEmailCadastred)
 	}
 
-	if err != sql.ErrNoRows {
-		u.logger.Errorf("Register.FindByEmail: %v", err)
-		return nil, fmt.Errorf("Register.FindByEmail: %v", err)
-	}
-
 	created, err := u.userRepoDatabase.Add(ctx, &models.User{
-		Id:        uuid.NewString(),
+		UserID:    uuid.NewString(),
 		Name:      params.Name,
 		Lastname:  params.Lastname,
-		Password:  params.Password,
+		Password:  params.HashPass(),
 		Email:     params.Email,
-		Role:      params.Role,
+		Role:      ClientRole,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	})
@@ -70,18 +77,29 @@ func (u *userUC) Register(ctx context.Context, params *user.ParamsCreateUser) (*
 }
 
 func (u *userUC) Login(ctx context.Context, email string, password string) (*models.Tokens, error) {
+	// fmt.Println("init login")
 	foundUser, err := u.userRepoDatabase.FindByEmail(ctx, email)
 	if err != nil {
 		u.logger.Errorf("Login.FindByEmail: %v", err)
 		return nil, fmt.Errorf("Login.FindByEmail: %v", err)
 	}
 
+	// fmt.Println("found user")
+
 	if err := foundUser.ComparePass(password); err != nil {
 		u.logger.Errorf("Login: %v", ErrPasswordIncorrect)
 		return nil, ErrPasswordIncorrect
 	}
 
-	tokens, err := u.jwtSession.CreateTokens(ctx, foundUser.Id, foundUser.Role)
+	// fmt.Println("compare pass")
+
+	if err := u.userRepoCache.Set(ctx, foundUser); err != nil {
+		u.logger.Warn("Login.Set: %v", err)
+	}
+
+	// fmt.Println("set in redis")
+
+	tokens, err := u.jwtSession.CreateTokens(ctx, foundUser.UserID, foundUser.Role)
 	if err != nil {
 		u.logger.Errorf("Login.CreateTokens: %v", err)
 		return nil, fmt.Errorf("Login.CreateTokens: %v", err)
@@ -91,6 +109,7 @@ func (u *userUC) Login(ctx context.Context, email string, password string) (*mod
 		Access:  tokens.Access,
 		Refresh: tokens.Refresh,
 	}, nil
+
 }
 
 func (u *userUC) Logout(ctx context.Context, accessTTK string, refreshTTK string) error {
@@ -104,22 +123,95 @@ func (u *userUC) Logout(ctx context.Context, accessTTK string, refreshTTK string
 }
 
 func (u *userUC) FindByID(ctx context.Context, userID string) (*user.ParamsOutputUser, error) {
-	foundUser, err := u.userRepoDatabase.FindByID(ctx, userID)
+	var (
+		foundUser *models.User
+		err       error
+	)
+
+	foundUser, err = u.userRepoCache.Get(ctx, userID)
+	if err == redis.Nil {
+		foundUser, err = u.userRepoDatabase.FindByID(ctx, userID)
+		if err != nil {
+			u.logger.Errorf("FindByID: %v", err)
+			return nil, fmt.Errorf("FindByID: %v", err)
+		}
+
+		if err := u.userRepoCache.Set(ctx, foundUser); err != nil {
+			u.logger.Warn("FindByID.Set: %v", err)
+		}
+
+		return user.Dto(foundUser), nil
+	}
+
 	if err != nil {
-		u.logger.Errorf("FindByID: %v", err)
-		return nil, fmt.Errorf("FindByID: %v", err)
+		u.logger.Errorf("FindByID.Get: %v", err)
+		return nil, fmt.Errorf("FindByID.Get: %v", err)
 	}
 
 	return user.Dto(foundUser), nil
 }
+
 func (u *userUC) FindByEmail(ctx context.Context, userEmail string) (*user.ParamsOutputUser, error) {
-	foundUser, err := u.userRepoDatabase.FindByEmail(ctx, userEmail)
-	if err != nil {
-		u.logger.Errorf("FindByEmail: %v", err)
-		return nil, fmt.Errorf("FindByEmail: %v", err)
+
+	var (
+		foundUser *models.User
+		err       error
+	)
+
+	foundUser, err = u.userRepoCache.Get(ctx, userEmail)
+	if err == redis.Nil {
+		foundUser, err = u.userRepoDatabase.FindByEmail(ctx, userEmail)
+		if err != nil {
+			u.logger.Errorf("FindByEmail: %v", err)
+			return nil, fmt.Errorf("FindByEmail: %v", err)
+		}
+
+		if err := u.userRepoCache.Set(ctx, foundUser); err != nil {
+			u.logger.Warn("FindByEmail.Set: %v", err)
+		}
+
+		return user.Dto(foundUser), nil
 	}
+
+	if err != nil {
+		u.logger.Errorf("FindByEmail.Get: %v", err)
+		return nil, fmt.Errorf("FindByEmail.Get: %v", err)
+	}
+
 	return user.Dto(foundUser), nil
 }
-func (u *userUC) Update(ctx context.Context, user *user.ParamsUpdateUser) (*user.ParamsOutputUser, error) {
-	return nil, nil
+
+func (u *userUC) Update(ctx context.Context, params *user.ParamsUpdateUser) (*user.ParamsOutputUser, error) {
+	if err := params.Validate(ctx); err != nil {
+		u.logger.Errorf("Update.Validate: %v", err)
+		return nil, errors.Wrap(err, "Update.Validate")
+	}
+
+	newUser, err := u.userRepoDatabase.Update(ctx,
+		&models.User{
+			UserID:    params.UserID,
+			Name:      params.Name,
+			Lastname:  params.Lastname,
+			Password:  params.Password,
+			Email:     params.Email,
+			UpdatedAt: time.Now(),
+		},
+	)
+
+	if err != nil {
+		u.logger.Errorf("Update.Update: %v", err)
+		return nil, errors.Wrap(err, "Update.Update")
+	}
+
+	return user.Dto(newUser), nil
+}
+
+func (u *userUC) ValidToken(ctx context.Context, tokenString string) error {
+	_, err := u.jwtSession.ValidToken(ctx, tokenString)
+	if err != nil {
+		u.logger.Errorf("ValidToken: %v", err)
+		return errors.Wrap(err, "ValidToken")
+	}
+
+	return nil
 }

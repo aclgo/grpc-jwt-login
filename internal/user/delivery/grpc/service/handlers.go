@@ -3,15 +3,17 @@ package service
 import (
 	"context"
 
-	"github.com/aclgo/grpc-jwt/internal/models"
 	"github.com/aclgo/grpc-jwt/internal/user"
 	"github.com/aclgo/grpc-jwt/pkg/grpc_errors"
 	"github.com/aclgo/grpc-jwt/proto"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+// func (us *UserService) mustEmbedUnimplementedUserServiceServer() {}
 
 func (us *UserService) Register(ctx context.Context, req *proto.CreateUserRequest) (*proto.CreatedUserResponse, error) {
 	params := user.ParamsCreateUser{
@@ -19,7 +21,6 @@ func (us *UserService) Register(ctx context.Context, req *proto.CreateUserReques
 		Lastname: req.LastName,
 		Password: req.Password,
 		Email:    req.Email,
-		Role:     req.Role,
 	}
 
 	created, err := us.userUC.Register(ctx, &params)
@@ -29,6 +30,7 @@ func (us *UserService) Register(ctx context.Context, req *proto.CreateUserReques
 
 	return &proto.CreatedUserResponse{User: parseModelsToProto(created)}, nil
 }
+
 func (us *UserService) Login(ctx context.Context, req *proto.UserLoginRequest) (*proto.UserLoginResponse, error) {
 	email, password := req.Email, req.Password
 	if email == "" || password == "" {
@@ -40,6 +42,8 @@ func (us *UserService) Login(ctx context.Context, req *proto.UserLoginRequest) (
 		return nil, status.Errorf(grpc_errors.ParseGRPCErrors(err), "Login: %v", err)
 	}
 
+	// fmt.Println("tokens generateds", tokens)
+
 	return &proto.UserLoginResponse{
 		Tokens: &proto.Tokens{
 			AccessToken:  tokens.Access,
@@ -47,6 +51,7 @@ func (us *UserService) Login(ctx context.Context, req *proto.UserLoginRequest) (
 		},
 	}, nil
 }
+
 func (us *UserService) Logout(ctx context.Context, req *proto.UserLogoutRequest) (*proto.UserLogoutResponse, error) {
 	accessTK, refreshTK := req.AccessToken, req.RefreshToken
 
@@ -56,7 +61,17 @@ func (us *UserService) Logout(ctx context.Context, req *proto.UserLogoutRequest)
 
 	return &proto.UserLogoutResponse{}, nil
 }
+
 func (us *UserService) FindById(ctx context.Context, req *proto.FindByIdRequest) (*proto.FindByIdResponse, error) {
+	tokenString, err := us.getToken(ctx, KeyAccessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := us.userUC.ValidToken(ctx, tokenString); err != nil {
+		return nil, status.Errorf(grpc_errors.ParseGRPCErrors(err), "FindById: %v", err)
+	}
+
 	id := req.Id
 
 	found, err := us.userUC.FindByID(ctx, id)
@@ -68,7 +83,17 @@ func (us *UserService) FindById(ctx context.Context, req *proto.FindByIdRequest)
 		User: parseModelsToProto(found),
 	}, nil
 }
+
 func (us *UserService) FindByEmail(ctx context.Context, req *proto.FindByEmailRequest) (*proto.FindByEmailResponse, error) {
+	tokenString, err := us.getToken(ctx, KeyAccessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := us.userUC.ValidToken(ctx, tokenString); err != nil {
+		return nil, status.Errorf(grpc_errors.ParseGRPCErrors(err), "FindByEmail: %v", err)
+	}
+
 	email := req.Email
 
 	found, err := us.userUC.FindByEmail(ctx, email)
@@ -81,17 +106,45 @@ func (us *UserService) FindByEmail(ctx context.Context, req *proto.FindByEmailRe
 	}, nil
 }
 
-func (us *UserService) parseProtoToModels(req *proto.User) *models.User {
-	return &models.User{
-		Id:        req.Id,
-		Name:      req.Name,
-		Lastname:  req.LastName,
-		Password:  req.Password,
-		Email:     req.Email,
-		Role:      req.Role,
-		CreatedAt: req.CreatedAt.AsTime(),
-		UpdatedAt: req.UpdatedAt.AsTime(),
+func (us *UserService) Update(ctx context.Context, req *proto.UpdateRequest) (*proto.UpdateResponse, error) {
+
+	updatedUser, err := us.userUC.Update(
+		ctx,
+		&user.ParamsUpdateUser{
+			UserID:   req.Id,
+			Name:     req.Name,
+			Lastname: req.Lastname,
+			Password: req.Password,
+			Email:    req.Email,
+		},
+	)
+
+	if err != nil {
+		return nil, status.Errorf(grpc_errors.ParseGRPCErrors(err), "Update.Update: %v", err)
 	}
+
+	return &proto.UpdateResponse{
+		User: parseModelsToProto(updatedUser),
+	}, nil
+}
+
+func (us *UserService) getToken(ctx context.Context, key string) (string, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "", status.Errorf(codes.Unauthenticated, "metadata.FromIncomingContext: %v", grpc_errors.ErrNoCtxMetaData)
+	}
+
+	token := md.Get(key)
+
+	if len(token) == 0 {
+		return "", status.Errorf(codes.PermissionDenied, "md.Get access_token: %v", grpc_errors.ErrInvalidToken)
+	}
+
+	if token[0] == "" {
+		return "", status.Errorf(codes.PermissionDenied, "md.Get access_token: %v", grpc_errors.ErrInvalidToken)
+	}
+
+	return token[0], nil
 }
 
 func parseModelsToProto(user *user.ParamsOutputUser) *proto.User {

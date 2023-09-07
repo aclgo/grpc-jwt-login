@@ -14,9 +14,9 @@ type UserRepoDatabase interface {
 }
 
 type UserRepoCache interface {
-	Set(context.Context)
-	Get(context.Context)
-	Del(context.Context)
+	Set(ctx context.Context, user *models.User) error
+	Get(ctx context.Context, userID string) (*models.User, error)
+	Del(ctx context.Context, userID string) error
 }
 
 type UserUC interface {
@@ -26,4 +26,5 @@ type UserUC interface {
 	Update(context.Context, *ParamsUpdateUser) (*ParamsOutputUser, error)
 	Login(context.Context, string, string) (*models.Tokens, error)
 	Logout(context.Context, string, string) error
+	ValidToken(context.Context, string) error
 }

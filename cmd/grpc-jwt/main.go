@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/aclgo/grpc-jwt/config"
@@ -17,8 +16,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Println("config loading")
 
 	logger := logger.NewapiLogger(cfg)
 	logger.InitLogger()

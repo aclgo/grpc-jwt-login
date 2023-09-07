@@ -3,13 +3,13 @@ package service
 import (
 	"github.com/aclgo/grpc-jwt/internal/user"
 	"github.com/aclgo/grpc-jwt/pkg/logger"
-	"google.golang.org/grpc/profiling/proto"
+	"github.com/aclgo/grpc-jwt/proto"
 )
 
 type UserService struct {
 	logger logger.Logger
 	userUC user.UserUC
-	proto.UnimplementedProfilingServer
+	proto.UnimplementedUserServiceServer
 }
 
 func NewUserService(logger logger.Logger, userUC user.UserUC) *UserService {

@@ -12,8 +12,8 @@ type Tokens struct {
 }
 
 type User struct {
-	Id        string    `json:"id"`
-	Name      string    `json:"name"`
+	UserID    string    `json:"user_id" db:"user_id"`
+	Name      string    `json:"name" db:"name"`
 	Lastname  string    `json:"last_name" db:"last_name"`
 	Password  string    `json:"password"`
 	Email     string    `json:"email"`
