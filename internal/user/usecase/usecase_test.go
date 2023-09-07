@@ -60,12 +60,11 @@ func TestRegister(t *testing.T) {
 		Lastname: "fake_lastname",
 		Password: "fake_pass",
 		Email:    "email@gmail.com",
-		Role:     "admin",
 	}
 
 	userPGRepo.EXPECT().FindByEmail(context.Background(), paramsCreate.Email).Return(nil, sql.ErrNoRows)
 	userPGRepo.EXPECT().Add(context.Background(), gomock.Any()).Return(&models.User{
-		Id:       uuidUser,
+		UserID:   uuidUser,
 		Name:     "fake_name",
 		Lastname: "fake_lastname",
 		Password: "fake_pass",
@@ -94,7 +93,7 @@ func TestFindByID(t *testing.T) {
 	userID := uuid.NewString()
 
 	mockUser := &models.User{
-		Id:       userID,
+		UserID:   userID,
 		Name:     "fake_name",
 		Lastname: "fake_lastname",
 		Password: "fake_pass",
@@ -104,12 +103,12 @@ func TestFindByID(t *testing.T) {
 
 	ctx := context.Background()
 
-	userPGRepo.EXPECT().FindByID(ctx, mockUser.Id).Return(mockUser, nil)
+	userPGRepo.EXPECT().FindByID(ctx, mockUser.UserID).Return(mockUser, nil)
 
-	foundUser, err := userUC.FindByID(ctx, mockUser.Id)
+	foundUser, err := userUC.FindByID(ctx, mockUser.UserID)
 	require.NoError(t, err)
 	require.NotNil(t, foundUser)
-	require.Equal(t, foundUser.Id, mockUser.Id)
+	require.Equal(t, foundUser.Id, mockUser.UserID)
 
 }
 func TestFindByEmail(t *testing.T) {
@@ -128,7 +127,7 @@ func TestFindByEmail(t *testing.T) {
 	userID := uuid.NewString()
 
 	mockUser := &models.User{
-		Id:       userID,
+		UserID:   userID,
 		Name:     "fake_name",
 		Lastname: "fake_lastname",
 		Password: "fake_pass",

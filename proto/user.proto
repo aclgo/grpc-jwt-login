@@ -16,11 +16,10 @@ message User {
 }
 
 message CreateUserRequest {
-    string Name = 1;
+    string name = 1;
     string last_name = 2;
     string password = 3;
     string email = 4;
-    string role = 5;
 }
 
 message CreatedUserResponse {
@@ -66,11 +65,24 @@ message FindByEmailResponse{
     User user = 1;
 }
 
+message UpdateRequest {
+    string id = 1;
+    string name = 2;
+    string lastname = 3;
+    string password = 4;
+    string email = 5;
+}
+
+message UpdateResponse {
+    User user = 1;
+}
+
 service UserService {
     rpc Register(CreateUserRequest) returns (CreatedUserResponse);
     rpc Login(UserLoginRequest)returns (UserLoginResponse);
     rpc Logout(UserLogoutRequest) returns (UserLogoutResponse);
     rpc FindById(FindByIdRequest) returns (FindByIdResponse);
     rpc FindByEmail(FindByEmailRequest) returns (FindByEmailResponse);
+    rpc Update(UpdateRequest) returns (UpdateResponse);
 }
 

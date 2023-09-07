@@ -16,13 +16,12 @@ func NewPostgresRepo(db *sqlx.DB) *postgresRepo {
 	return &postgresRepo{
 		db: db,
 	}
-
 }
 
 func (p *postgresRepo) Add(ctx context.Context, user *models.User) (*models.User, error) {
 	createdUser := models.User{}
 	err := p.db.QueryRowxContext(ctx, queryAddUser,
-		user.Id,
+		user.UserID,
 		user.Name,
 		user.Lastname,
 		user.Password,
@@ -58,14 +57,12 @@ func (p *postgresRepo) Update(ctx context.Context, user *models.User) (*models.U
 	updatedUser := models.User{}
 
 	err := p.db.QueryRowxContext(ctx, queryUpdate,
-		user.Id,
 		user.Name,
 		user.Lastname,
 		user.Password,
 		user.Email,
-		user.Role,
-		user.CreatedAt,
 		user.UpdatedAt,
+		user.UserID,
 	).StructScan(&updatedUser)
 
 	if err != nil {

@@ -29,7 +29,7 @@ func TestUserRepository_Add(t *testing.T) {
 	now := time.Now()
 
 	mockUser := &models.User{
-		Id:        uuidUser,
+		UserID:    uuidUser,
 		Name:      "fake_name",
 		Lastname:  "fake_lastname",
 		Password:  "fake_pass",
@@ -51,7 +51,7 @@ func TestUserRepository_Add(t *testing.T) {
 	)
 
 	mock.ExpectQuery(queryAddUser).WithArgs(
-		mockUser.Id,
+		mockUser.UserID,
 		mockUser.Name,
 		mockUser.Lastname,
 		mockUser.Password,
@@ -83,7 +83,7 @@ func TestFindByID(t *testing.T) {
 	now := time.Now()
 
 	mockUser := models.User{
-		Id:        uuidUser,
+		UserID:    uuidUser,
 		Name:      "fake_name",
 		Lastname:  "fake_lastname",
 		Password:  "fake_pass",
@@ -94,7 +94,7 @@ func TestFindByID(t *testing.T) {
 	}
 
 	rows := sqlmock.NewRows(columns).AddRow(
-		mockUser.Id,
+		mockUser.UserID,
 		mockUser.Name,
 		mockUser.Lastname,
 		mockUser.Password,
@@ -104,12 +104,12 @@ func TestFindByID(t *testing.T) {
 		now,
 	)
 
-	mock.ExpectQuery(queryByID).WithArgs(mockUser.Id).WillReturnRows(rows)
+	mock.ExpectQuery(queryByID).WithArgs(mockUser.UserID).WillReturnRows(rows)
 
-	foundUser, err := userPGRepo.FindByID(context.Background(), mockUser.Id)
+	foundUser, err := userPGRepo.FindByID(context.Background(), mockUser.UserID)
 	require.NoError(t, err)
 	require.NotNil(t, foundUser)
-	require.Equal(t, foundUser.Id, mockUser.Id)
+	require.Equal(t, foundUser.UserID, mockUser.UserID)
 }
 
 func TestFindByEmail(t *testing.T) {
@@ -129,7 +129,7 @@ func TestFindByEmail(t *testing.T) {
 	now := time.Now()
 
 	mockUser := models.User{
-		Id:        uuidUser,
+		UserID:    uuidUser,
 		Name:      "fake_name",
 		Lastname:  "fake_lastname",
 		Password:  "fake_pass",
@@ -140,7 +140,7 @@ func TestFindByEmail(t *testing.T) {
 	}
 
 	rows := sqlmock.NewRows(columns).AddRow(
-		mockUser.Id,
+		mockUser.UserID,
 		mockUser.Name,
 		mockUser.Lastname,
 		mockUser.Password,
@@ -175,7 +175,7 @@ func TestUpdate(t *testing.T) {
 	now := time.Now()
 
 	mockUser := models.User{
-		Id:        uuidUser,
+		UserID:    uuidUser,
 		Name:      "fake_name",
 		Lastname:  "fake_lastname",
 		Password:  "fake_pass",
@@ -186,7 +186,7 @@ func TestUpdate(t *testing.T) {
 	}
 
 	rows := sqlmock.NewRows(columns).AddRow(
-		mockUser.Id,
+		mockUser.UserID,
 		mockUser.Name,
 		mockUser.Lastname,
 		mockUser.Password,
@@ -197,7 +197,7 @@ func TestUpdate(t *testing.T) {
 	)
 
 	mock.ExpectQuery(queryUpdate).WithArgs(
-		mockUser.Id,
+		mockUser.UserID,
 		mockUser.Name,
 		mockUser.Lastname,
 		mockUser.Password,
@@ -210,6 +210,6 @@ func TestUpdate(t *testing.T) {
 	updatedUser, err := userRepo.Update(context.Background(), &mockUser)
 	require.NoError(t, err)
 	require.NotNil(t, updatedUser)
-	require.Equal(t, mockUser.Id, uuidUser)
+	require.Equal(t, mockUser.UserID, uuidUser)
 
 }

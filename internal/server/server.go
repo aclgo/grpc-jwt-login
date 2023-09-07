@@ -38,10 +38,12 @@ func (s *Server) Run() error {
 	interceptor := interceptor.NewInterceptor(s.logger)
 
 	sessUC := sessionUC.NewSessionUC(s.logger, s.redisClient, s.config.SecretKey)
-	usRepo := userRepo.NewPostgresRepo(s.db)
-	usUC := userUC.NewUserUC(s.logger, usRepo, nil, sessUC)
 
-	userService := service.NewUserService(s.logger, usUC)
+	usRepo := userRepo.NewPostgresRepo(s.db)
+	usRepoRedis := userRepo.NewredisRepo(s.redisClient)
+	userUC := userUC.NewUserUC(s.logger, usRepo, usRepoRedis, sessUC)
+
+	userService := service.NewUserService(s.logger, userUC)
 
 	listen, err := net.Listen("tcp", "localhost:"+s.config.ServerPort)
 	// fmt.Println(s.config.ServerPort)
