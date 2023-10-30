@@ -1,16 +1,6 @@
 version: "3.9"
 
 services:
-  postgres:
-    image: postgres
-    container_name: postgres
-    environment:
-      POSTGRES_PASSWORD: "grpc-jwt"
-      POSTGRES_USER: "grpc-jwt"
-      POSTGRES_DB: "grpc-jwt"
-    ports:
-      - "5432:5432"
-
   redis:
     image: redis
     ports:

@@ -46,24 +46,13 @@ func (s *Server) Run() error {
 	userService := service.NewUserService(s.logger, userUC)
 
 	listen, err := net.Listen("tcp", "localhost:"+s.config.ServerPort)
-	// fmt.Println(s.config.ServerPort)
+
 	if err != nil {
 		s.logger.Errorf("net.Listen: %v", err)
 	}
 
 	opts := []grpc.ServerOption{
-		// grpc.KeepaliveParams(grpc.KeepaliveParams{
-		// 	grpc.MaxConnectionIdle:
-		// 	TIMeout:
-		// MaxConnectionAge:
-		// Time:
-		// }),
 		grpc.UnaryInterceptor(interceptor.Logger),
-		// grpc.ChainUnaryInterceptor(
-		// 	grpc_ctxtags.UnaryServerInterceptor(),
-		// 	grpc_prometheus.UnaryServerInterceptor(),
-		// 	grpc_recovery.UnaryServerInterceptor(),
-		// ),
 	}
 
 	server := grpc.NewServer(opts...)
