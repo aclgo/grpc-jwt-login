@@ -5,7 +5,6 @@ import (
 
 	"github.com/aclgo/grpc-jwt/config"
 	"github.com/aclgo/grpc-jwt/internal/server"
-
 	"github.com/aclgo/grpc-jwt/pkg/logger"
 	"github.com/aclgo/grpc-jwt/pkg/postgres"
 	rredis "github.com/aclgo/grpc-jwt/pkg/redis"

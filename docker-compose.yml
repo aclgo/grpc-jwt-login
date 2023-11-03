@@ -1,6 +1,10 @@
 version: "3.9"
 
 services:
+  # grpc-jwt:
+  #   image: .
+  #   ports:
+  #     - 50051:50051
   redis:
     image: redis
     ports:

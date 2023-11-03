@@ -8,7 +8,6 @@ import (
 	"github.com/aclgo/grpc-jwt/proto"
 
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -63,14 +62,14 @@ func (us *UserService) Logout(ctx context.Context, req *proto.UserLogoutRequest)
 }
 
 func (us *UserService) FindById(ctx context.Context, req *proto.FindByIdRequest) (*proto.FindByIdResponse, error) {
-	tokenString, err := us.getToken(ctx, KeyAccessToken)
-	if err != nil {
-		return nil, err
-	}
+	// tokenString, err := us.getToken(ctx, KeyAccessToken)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	if err := us.userUC.ValidToken(ctx, tokenString); err != nil {
-		return nil, status.Errorf(grpc_errors.ParseGRPCErrors(err), "FindById: %v", err)
-	}
+	// if err := us.userUC.ValidToken(ctx, tokenString); err != nil {
+	// 	return nil, status.Errorf(grpc_errors.ParseGRPCErrors(err), "FindById: %v", err)
+	// }
 
 	id := req.Id
 
@@ -85,14 +84,14 @@ func (us *UserService) FindById(ctx context.Context, req *proto.FindByIdRequest)
 }
 
 func (us *UserService) FindByEmail(ctx context.Context, req *proto.FindByEmailRequest) (*proto.FindByEmailResponse, error) {
-	tokenString, err := us.getToken(ctx, KeyAccessToken)
-	if err != nil {
-		return nil, err
-	}
+	// tokenString, err := us.getToken(ctx, KeyAccessToken)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	if err := us.userUC.ValidToken(ctx, tokenString); err != nil {
-		return nil, status.Errorf(grpc_errors.ParseGRPCErrors(err), "FindByEmail: %v", err)
-	}
+	// if err := us.userUC.ValidToken(ctx, tokenString); err != nil {
+	// 	return nil, status.Errorf(grpc_errors.ParseGRPCErrors(err), "FindByEmail: %v", err)
+	// }
 
 	email := req.Email
 
@@ -128,24 +127,36 @@ func (us *UserService) Update(ctx context.Context, req *proto.UpdateRequest) (*p
 	}, nil
 }
 
-func (us *UserService) getToken(ctx context.Context, key string) (string, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return "", status.Errorf(codes.Unauthenticated, "metadata.FromIncomingContext: %v", grpc_errors.ErrNoCtxMetaData)
+func (us *UserService) ValidateToken(ctx context.Context, req *proto.ValidateTokenRequest) (*proto.ValidateTokenResponse, error) {
+	resp, err := us.userUC.ValidToken(ctx, req.Token)
+	if err != nil {
+		return nil, err
 	}
 
-	token := md.Get(key)
-
-	if len(token) == 0 {
-		return "", status.Errorf(codes.PermissionDenied, "md.Get access_token: %v", grpc_errors.ErrInvalidToken)
-	}
-
-	if token[0] == "" {
-		return "", status.Errorf(codes.PermissionDenied, "md.Get access_token: %v", grpc_errors.ErrInvalidToken)
-	}
-
-	return token[0], nil
+	return &proto.ValidateTokenResponse{
+		UserID:   resp.UserID,
+		UserRole: resp.Role,
+	}, nil
 }
+
+// func (us *UserService) getToken(ctx context.Context, key string) (string, error) {
+// 	md, ok := metadata.FromIncomingContext(ctx)
+// 	if !ok {
+// 		return "", status.Errorf(codes.Unauthenticated, "metadata.FromIncomingContext: %v", grpc_errors.ErrNoCtxMetaData)
+// 	}
+
+// 	token := md.Get(key)
+
+// 	if len(token) == 0 {
+// 		return "", status.Errorf(codes.PermissionDenied, "md.Get access_token: %v", grpc_errors.ErrInvalidToken)
+// 	}
+
+// 	if token[0] == "" {
+// 		return "", status.Errorf(codes.PermissionDenied, "md.Get access_token: %v", grpc_errors.ErrInvalidToken)
+// 	}
+
+// 	return token[0], nil
+// }
 
 func parseModelsToProto(user *user.ParamsOutputUser) *proto.User {
 	return &proto.User{

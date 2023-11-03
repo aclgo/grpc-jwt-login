@@ -206,12 +206,15 @@ func (u *userUC) Update(ctx context.Context, params *user.ParamsUpdateUser) (*us
 	return user.Dto(newUser), nil
 }
 
-func (u *userUC) ValidToken(ctx context.Context, tokenString string) error {
-	_, err := u.jwtSession.ValidToken(ctx, tokenString)
+func (u *userUC) ValidToken(ctx context.Context, tokenString string) (*user.ParamsJwtData, error) {
+	claims, err := u.jwtSession.ValidToken(ctx, tokenString)
 	if err != nil {
 		u.logger.Errorf("ValidToken: %v", err)
-		return errors.Wrap(err, "ValidToken")
+		return nil, errors.Wrap(err, "ValidToken")
 	}
 
-	return nil
+	return &user.ParamsJwtData{
+		UserID: claims["id"].(string),
+		Role:   claims["role"].(string),
+	}, nil
 }

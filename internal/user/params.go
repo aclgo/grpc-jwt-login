@@ -68,3 +68,8 @@ func Dto(user *models.User) *ParamsOutputUser {
 		UpdatedAt: user.UpdatedAt,
 	}
 }
+
+type ParamsJwtData struct {
+	UserID string
+	Role   string
+}

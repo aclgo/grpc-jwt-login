@@ -77,6 +77,15 @@ message UpdateResponse {
     User user = 1;
 }
 
+message ValidateTokenRequest {
+    string token = 1;
+}
+
+message ValidateTokenResponse {
+    string UserID = 1;
+    string UserRole = 2;
+}
+
 service UserService {
     rpc Register(CreateUserRequest) returns (CreatedUserResponse);
     rpc Login(UserLoginRequest)returns (UserLoginResponse);
@@ -84,5 +93,6 @@ service UserService {
     rpc FindById(FindByIdRequest) returns (FindByIdResponse);
     rpc FindByEmail(FindByEmailRequest) returns (FindByEmailResponse);
     rpc Update(UpdateRequest) returns (UpdateResponse);
+    rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
 }
 
