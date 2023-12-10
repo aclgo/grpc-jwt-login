@@ -15,4 +15,6 @@ COPY --from=builder /app/grpc-jwt ./
 
 COPY --from=builder /app/.env ./
 
-ENTRYPOINT [ "grpc-jwt" ]
+EXPOSE 50052
+
+ENTRYPOINT [ "./grpc-jwt" ]

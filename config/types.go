@@ -7,7 +7,6 @@ type Config struct {
 	SecretKey      string        `mapstructure:"SECRET_KEY"`
 	LogLevel       string        `mapstructure:"LOG_LEVEL"`
 	LogEncoding    string        `mapstructure:"LOG_ENCODING"`
-	AppVersion     string        `mapstructure:"APP_VERSION"`
 	ServerMode     string        `mapstructure:"SERVER_MODE"`
 	ServerPort     string        `mapstructure:"SERVER_PORT"`
 	DatabaseUrl    string        `mapstructure:"DATABASE_URL"`

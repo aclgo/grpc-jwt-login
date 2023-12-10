@@ -45,7 +45,7 @@ func (s *Server) Run() error {
 
 	userService := service.NewUserService(s.logger, userUC)
 
-	listen, err := net.Listen("tcp", "localhost:"+s.config.ServerPort)
+	listen, err := net.Listen("tcp", ":"+s.config.ServerPort)
 
 	if err != nil {
 		s.logger.Errorf("net.Listen: %v", err)

@@ -16,6 +16,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// fmt.Println(cfg)
+
 	logger := logger.NewapiLogger(cfg)
 	logger.InitLogger()
 	logger.Info("logger initialized")

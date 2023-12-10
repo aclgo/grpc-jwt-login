@@ -1,10 +1,27 @@
 version: "3.9"
 
 services:
-  # grpc-jwt:
-  #   image: .
-  #   ports:
-  #     - 50051:50051
+  app:
+    build: .
+    ports:
+      - 50052:50052
+    restart: always
+  
+  db:
+    image: postgres:15.2-alpine3.17
+    container_name: db
+    environment:
+      POSTGRES_PASSWORD: grpc-admin
+      POSTGRES_USER: grpc-admin
+      POSTGRES_DB: grpc-admin      
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U grpc-admin"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+
   redis:
     image: redis
     ports:
