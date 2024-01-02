@@ -2,9 +2,17 @@ package session
 
 import (
 	"context"
+	"time"
 
 	"github.com/aclgo/grpc-jwt/internal/session/models"
 	"github.com/golang-jwt/jwt"
+)
+
+const (
+	TypeAccessTTK    = "access"
+	TypeRefreshTTK   = "refresh"
+	TtlExpAccessTTK  = time.Hour
+	TtlExpRefreshTTK = time.Hour * 24
 )
 
 type SessionUC interface {

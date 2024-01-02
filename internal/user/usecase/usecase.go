@@ -97,13 +97,14 @@ func (u *userUC) Login(ctx context.Context, email string, password string) (*mod
 		u.logger.Warn("Login.Set: %v", err)
 	}
 
-	// fmt.Println("set in redis")
-
 	tokens, err := u.jwtSession.CreateTokens(ctx, foundUser.UserID, foundUser.Role)
 	if err != nil {
 		u.logger.Errorf("Login.CreateTokens: %v", err)
 		return nil, fmt.Errorf("Login.CreateTokens: %v", err)
 	}
+
+	// u.logger.Info(tokens.Access)
+	// u.logger.Info(tokens.Refresh)
 
 	return &models.Tokens{
 		Access:  tokens.Access,
@@ -208,10 +209,11 @@ func (u *userUC) Update(ctx context.Context, params *user.ParamsUpdateUser) (*us
 
 func (u *userUC) ValidToken(ctx context.Context, tokenString string) (*user.ParamsJwtData, error) {
 	claims, err := u.jwtSession.ValidToken(ctx, tokenString)
-	if err != nil {
+	if err != nil && !errors.Is(err, redis.Nil) {
 		u.logger.Errorf("ValidToken: %v", err)
-		return nil, errors.Wrap(err, "ValidToken")
+		return nil, err
 	}
+	// u.logger.Info(claims)
 
 	return &user.ParamsJwtData{
 		UserID: claims["id"].(string),

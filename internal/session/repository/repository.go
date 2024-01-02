@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -19,9 +18,9 @@ func NewjwtStore(redisClient *redis.Client) *jwtRepo {
 }
 
 func (j *jwtRepo) Get(ctx context.Context, tokenString string) error {
-	_, err := j.redisClient.Get(tokenString).Result()
+	err := j.redisClient.Get(tokenString).Err()
 	if err != nil {
-		return fmt.Errorf("j.redisClient.Get: %v", err)
+		return err
 	}
 	return nil
 }
@@ -29,7 +28,7 @@ func (j *jwtRepo) Get(ctx context.Context, tokenString string) error {
 func (j *jwtRepo) Set(ctx context.Context, tokenString string, ttl time.Duration) error {
 	err := j.redisClient.Set(tokenString, nil, ttl).Err()
 	if err != nil {
-		return fmt.Errorf("j.redisClient.Set: %v", err)
+		return err
 	}
 	return nil
 }

@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"time"
 
 	session "github.com/aclgo/grpc-jwt/internal/session"
 	"github.com/aclgo/grpc-jwt/internal/session/models"
@@ -34,18 +33,21 @@ func NewSessionUC(logger logger.Logger, redisClient *redis.Client,
 	}
 }
 
-const (
-	typeAccessTTK    = "access"
-	typeRefreshTTK   = "refresh"
-	ttlExpAccessTTK  = time.Hour
-	ttlExpRefreshTTK = time.Hour * 24
-)
-
 func (s *sessionUC) CreateTokens(ctx context.Context, userID, role string) (*models.Token, error) {
 	return s.createTokens(ctx, userID, role)
 }
 
 func (s *sessionUC) RefreshToken(ctx context.Context, accessTTK, refreshTTK string) (*models.Token, error) {
+
+	err := s.verifyRevogedToken(ctx, refreshTTK)
+
+	if err == nil {
+		return nil, session.ErrTokenRevoged
+	}
+
+	if err != nil && err != redis.Nil {
+		return nil, err
+	}
 
 	parsedAccess, err := s.tokenAction.ParseToken(accessTTK)
 	if err != nil {
@@ -71,12 +73,16 @@ func (s *sessionUC) RefreshToken(ctx context.Context, accessTTK, refreshTTK stri
 		return nil, fmt.Errorf("RefreshToken.GetClaims: %v", err)
 	}
 
-	// idAccess, _ := claimsAccess["id"].(string)
+	idAccess, _ := claimsAccess["id"].(string)
 	idRefresh, _ := claimsRefresh["id"].(string)
-	typeTTK, _ := claimsRefresh["type"].(string)
+	typeRefresh, _ := claimsRefresh["type"].(string)
 
-	if typeTTK != typeRefreshTTK {
-		return nil, ErrTypeTokenInvalid
+	if idAccess != idRefresh {
+		return nil, session.ErrMistachTokenID
+	}
+
+	if typeRefresh != session.TypeRefreshTTK {
+		return nil, session.ErrTypeTokenInvalid
 	}
 
 	role, _ := claimsAccess["role"].(string)
@@ -87,48 +93,52 @@ func (s *sessionUC) RefreshToken(ctx context.Context, accessTTK, refreshTTK stri
 func (s *sessionUC) ValidToken(ctx context.Context, ttkString string) (jwt.MapClaims, error) {
 	parsedAccess, err := s.tokenAction.ParseToken(ttkString)
 	if err != nil {
-		s.logger.Error(ErrInvalidToken)
-		return nil, ErrInvalidToken
+		s.logger.Error(session.ErrInvalidToken)
+		return nil, session.ErrInvalidToken
 	}
 
 	claimsAccess, err := s.tokenAction.GetClaims(parsedAccess)
 	if err != nil {
-		s.logger.Error(ErrInvalidToken)
-		return nil, ErrInvalidToken
+		s.logger.Error(session.ErrInvalidToken)
+		return nil, session.ErrInvalidToken
 	}
 
 	expUnix := claimsAccess["exp"].(float64)
 	if s.tokenAction.IsExpired(expUnix) {
-		s.logger.Error(ErrTokenExpired)
-		return nil, ErrTokenExpired
+		s.logger.Error(session.ErrTokenExpired)
+		return nil, session.ErrTokenExpired
 	}
 
-	if !s.tokenAction.IsExpired(expUnix) {
-		return claimsAccess, nil
+	if err := s.verifyRevogedToken(ctx, ttkString); err != nil {
+		if err == redis.Nil {
+			return claimsAccess, nil
+		}
+
+		return nil, err
 	}
 
-	s.logger.Error(ErrTokenRevoged)
-	return nil, ErrTokenRevoged
+	return nil, session.ErrTokenRevoged
 }
 
 func (s *sessionUC) RevogeToken(ctx context.Context, ttkAccess, ttkRefresh string) error {
-	token, err := s.tokenAction.ParseToken(ttkAccess)
+
+	err := s.tokenRepo.Set(
+		ctx,
+		ttkAccess,
+		session.TtlExpAccessTTK,
+	)
+
 	if err != nil {
-		return fmt.Errorf("RevogeToken.ParseToken: %v", err)
+		s.logger.Errorf("RevogeToken.Set: %v", err)
+		return fmt.Errorf("RevogeToken.Set: %v", err)
 	}
 
-	parsedTTK, err := s.tokenAction.GetClaims(token)
+	err = s.tokenRepo.Set(ctx,
+		ttkRefresh,
+		session.TtlExpRefreshTTK,
+	)
+
 	if err != nil {
-		s.logger.Errorf("RevogeToken.GetClaims: %v", err)
-		return fmt.Errorf("RevogeToken.GetClaims: %v", err)
-	}
-
-	exp := parsedTTK["exp"].(float64)
-	now := time.Now().Unix()
-
-	timeRestant := exp - float64(now)
-
-	if s.tokenRepo.Set(ctx, ttkAccess, time.Duration(timeRestant)*time.Second); err != nil {
 		s.logger.Errorf("RevogeToken.Set: %v", err)
 		return fmt.Errorf("RevogeToken.Set: %v", err)
 	}
@@ -137,21 +147,25 @@ func (s *sessionUC) RevogeToken(ctx context.Context, ttkAccess, ttkRefresh strin
 }
 
 func (s *sessionUC) VerifyRevogedToken(ctx context.Context, ttkString string) error {
+	return s.verifyRevogedToken(ctx, session.FormatKeyRevogedToken(session.DefaultKeyRevogedTokenAccess, ttkString))
+}
+
+func (s *sessionUC) verifyRevogedToken(ctx context.Context, ttkString string) error {
 	err := s.tokenRepo.Get(ctx, ttkString)
-	if err == redis.Nil {
-		return nil
+	if err != nil {
+		return err
 	}
-	s.logger.Error(ErrTokenRevoged)
-	return ErrTokenRevoged
+
+	return nil
 }
 
 func (s *sessionUC) createTokens(ctx context.Context, userID, role string) (*models.Token, error) {
-	access, err := s.tokenAction.NewToken(typeAccessTTK, userID, role, ttlExpAccessTTK)
+	access, err := s.tokenAction.NewToken(session.TypeAccessTTK, userID, role, session.TtlExpAccessTTK)
 	if err != nil {
 		return nil, err
 	}
 
-	refresh, err := s.tokenAction.NewToken(typeRefreshTTK, userID, "", ttlExpRefreshTTK)
+	refresh, err := s.tokenAction.NewToken(session.TypeRefreshTTK, userID, "", session.TtlExpRefreshTTK)
 	if err != nil {
 		return nil, err
 	}
