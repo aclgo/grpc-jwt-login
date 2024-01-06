@@ -86,6 +86,16 @@ message ValidateTokenResponse {
     string UserRole = 2;
 }
 
+message RefreshTokensRequest {
+    string accessToken = 1;
+    string refreshToken = 2;
+}
+
+message RefreshTokensResponse {
+    string accessToken = 1;
+    string refreshToken = 2;
+}
+
 service UserService {
     rpc Register(CreateUserRequest) returns (CreatedUserResponse);
     rpc Login(UserLoginRequest)returns (UserLoginResponse);
@@ -94,5 +104,6 @@ service UserService {
     rpc FindByEmail(FindByEmailRequest) returns (FindByEmailResponse);
     rpc Update(UpdateRequest) returns (UpdateResponse);
     rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+    rpc RefreshTokens(RefreshTokensRequest) returns (RefreshTokensResponse);
 }
 

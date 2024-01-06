@@ -207,8 +207,8 @@ func (u *userUC) Update(ctx context.Context, params *user.ParamsUpdateUser) (*us
 	return user.Dto(newUser), nil
 }
 
-func (u *userUC) ValidToken(ctx context.Context, tokenString string) (*user.ParamsJwtData, error) {
-	claims, err := u.jwtSession.ValidToken(ctx, tokenString)
+func (u *userUC) ValidToken(ctx context.Context, params *user.ParamsValidToken) (*user.ParamsJwtData, error) {
+	claims, err := u.jwtSession.ValidToken(ctx, params.AccessToken)
 	if err != nil && !errors.Is(err, redis.Nil) {
 		u.logger.Errorf("ValidToken: %v", err)
 		return nil, err
@@ -218,5 +218,17 @@ func (u *userUC) ValidToken(ctx context.Context, tokenString string) (*user.Para
 	return &user.ParamsJwtData{
 		UserID: claims["id"].(string),
 		Role:   claims["role"].(string),
+	}, nil
+}
+
+func (u *userUC) RefreshTokens(ctx context.Context, params *user.ParamsRefreshTokens) (*user.RefreshTokens, error) {
+	tokens, err := u.jwtSession.RefreshToken(ctx, params.AccessToken, params.RefreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user.RefreshTokens{
+		AccessToken:  tokens.Access,
+		RefreshToken: tokens.Refresh,
 	}, nil
 }

@@ -61,6 +61,22 @@ func (us *UserService) Logout(ctx context.Context, req *proto.UserLogoutRequest)
 	return &proto.UserLogoutResponse{}, nil
 }
 
+func (us *UserService) Refresh(ctx context.Context, req *proto.RefreshTokensRequest) (*proto.RefreshTokensResponse, error) {
+	tokens, err := us.RefreshTokens(ctx, &proto.RefreshTokensRequest{
+		AccessToken:  req.AccessToken,
+		RefreshToken: req.RefreshToken,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &proto.RefreshTokensResponse{
+		AccessToken:  tokens.AccessToken,
+		RefreshToken: tokens.RefreshToken,
+	}, nil
+}
+
 func (us *UserService) FindById(ctx context.Context, req *proto.FindByIdRequest) (*proto.FindByIdResponse, error) {
 	// tokenString, err := us.getToken(ctx, KeyAccessToken)
 	// if err != nil {
@@ -128,7 +144,7 @@ func (us *UserService) Update(ctx context.Context, req *proto.UpdateRequest) (*p
 }
 
 func (us *UserService) ValidateToken(ctx context.Context, req *proto.ValidateTokenRequest) (*proto.ValidateTokenResponse, error) {
-	resp, err := us.userUC.ValidToken(ctx, req.Token)
+	resp, err := us.userUC.ValidToken(ctx, &user.ParamsValidToken{AccessToken: req.Token})
 	if err != nil {
 		return nil, err
 	}

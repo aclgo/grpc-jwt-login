@@ -41,53 +41,53 @@ func (s *sessionUC) RefreshToken(ctx context.Context, accessTTK, refreshTTK stri
 
 	err := s.verifyRevogedToken(ctx, refreshTTK)
 
-	if err == nil {
-		return nil, session.ErrTokenRevoged
-	}
+	if err != nil {
+		if err != redis.Nil {
+			parsedAccess, err := s.tokenAction.ParseToken(accessTTK)
+			if err != nil {
+				s.logger.Errorf("RefreshToken.ParseToken: %v", err)
+				return nil, fmt.Errorf("RefreshToken.ParseToken: %v", err)
+			}
 
-	if err != nil && err != redis.Nil {
+			parsedRefresh, err := s.tokenAction.ParseToken(refreshTTK)
+			if err != nil {
+				s.logger.Errorf("RefreshToken.ParseToken: %v", err)
+				return nil, fmt.Errorf("RefreshToken.ParseToken: %v", err)
+			}
+
+			claimsAccess, err := s.tokenAction.GetClaims(parsedAccess)
+			if err != nil {
+				s.logger.Errorf("RefreshToken.GetClaims: %v", err)
+				return nil, fmt.Errorf("RefreshToken.GetClaims: %v", err)
+			}
+
+			claimsRefresh, err := s.tokenAction.GetClaims(parsedRefresh)
+			if err != nil {
+				s.logger.Errorf("RefreshToken.GetClaims: %v", err)
+				return nil, fmt.Errorf("RefreshToken.GetClaims: %v", err)
+			}
+
+			idAccess, _ := claimsAccess["id"].(string)
+			idRefresh, _ := claimsRefresh["id"].(string)
+			typeRefresh, _ := claimsRefresh["type"].(string)
+
+			if idAccess != idRefresh {
+				return nil, session.ErrMistachTokenID
+			}
+
+			if typeRefresh != session.TypeRefreshTTK {
+				return nil, session.ErrTypeTokenInvalid
+			}
+
+			role, _ := claimsAccess["role"].(string)
+
+			return s.createTokens(ctx, idRefresh, role)
+		}
+
 		return nil, err
 	}
 
-	parsedAccess, err := s.tokenAction.ParseToken(accessTTK)
-	if err != nil {
-		s.logger.Errorf("RefreshToken.ParseToken: %v", err)
-		return nil, fmt.Errorf("RefreshToken.ParseToken: %v", err)
-	}
-
-	parsedRefresh, err := s.tokenAction.ParseToken(refreshTTK)
-	if err != nil {
-		s.logger.Errorf("RefreshToken.ParseToken: %v", err)
-		return nil, fmt.Errorf("RefreshToken.ParseToken: %v", err)
-	}
-
-	claimsAccess, err := s.tokenAction.GetClaims(parsedAccess)
-	if err != nil {
-		s.logger.Errorf("RefreshToken.GetClaims: %v", err)
-		return nil, fmt.Errorf("RefreshToken.GetClaims: %v", err)
-	}
-
-	claimsRefresh, err := s.tokenAction.GetClaims(parsedRefresh)
-	if err != nil {
-		s.logger.Errorf("RefreshToken.GetClaims: %v", err)
-		return nil, fmt.Errorf("RefreshToken.GetClaims: %v", err)
-	}
-
-	idAccess, _ := claimsAccess["id"].(string)
-	idRefresh, _ := claimsRefresh["id"].(string)
-	typeRefresh, _ := claimsRefresh["type"].(string)
-
-	if idAccess != idRefresh {
-		return nil, session.ErrMistachTokenID
-	}
-
-	if typeRefresh != session.TypeRefreshTTK {
-		return nil, session.ErrTypeTokenInvalid
-	}
-
-	role, _ := claimsAccess["role"].(string)
-
-	return s.createTokens(ctx, idRefresh, role)
+	return nil, session.ErrTokenRevoged
 }
 
 func (s *sessionUC) ValidToken(ctx context.Context, ttkString string) (jwt.MapClaims, error) {
@@ -146,7 +146,7 @@ func (s *sessionUC) RevogeToken(ctx context.Context, ttkAccess, ttkRefresh strin
 	return nil
 }
 
-func (s *sessionUC) VerifyRevogedToken(ctx context.Context, ttkString string) error {
+func (s *sessionUC) VerifyRevogedTokens(ctx context.Context, ttkString string) error {
 	return s.verifyRevogedToken(ctx, session.FormatKeyRevogedToken(session.DefaultKeyRevogedTokenAccess, ttkString))
 }
 

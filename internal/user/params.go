@@ -73,3 +73,17 @@ type ParamsJwtData struct {
 	UserID string
 	Role   string
 }
+
+type ParamsValidToken struct {
+	AccessToken string
+}
+
+type ParamsRefreshTokens struct {
+	AccessToken  string
+	RefreshToken string
+}
+
+type RefreshTokens struct {
+	AccessToken  string
+	RefreshToken string
+}

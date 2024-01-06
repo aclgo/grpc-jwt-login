@@ -126,7 +126,7 @@ func TestRevogedTTK(t *testing.T) {
 		errRefresh := sessUC.RevogeToken(context.Background(), tokens.Access, tokens.Refresh)
 		require.NoError(t, errRefresh)
 
-		err = sessUC.VerifyRevogedToken(context.Background(), tokens.Access)
+		err = sessUC.VerifyRevogedTokens(context.Background(), tokens.Access)
 		require.Error(t, err, errors.New("token revoged"))
 	})
 }

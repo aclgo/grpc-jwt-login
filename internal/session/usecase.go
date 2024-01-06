@@ -20,5 +20,5 @@ type SessionUC interface {
 	RefreshToken(context.Context, string, string) (*models.Token, error)
 	ValidToken(context.Context, string) (jwt.MapClaims, error)
 	RevogeToken(context.Context, string, string) error
-	VerifyRevogedToken(context.Context, string) error
+	VerifyRevogedTokens(context.Context, string) error
 }

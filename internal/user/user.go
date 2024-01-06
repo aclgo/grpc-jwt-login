@@ -26,5 +26,6 @@ type UserUC interface {
 	Update(context.Context, *ParamsUpdateUser) (*ParamsOutputUser, error)
 	Login(context.Context, string, string) (*models.Tokens, error)
 	Logout(context.Context, string, string) error
-	ValidToken(context.Context, string) (*ParamsJwtData, error)
+	ValidToken(context.Context, *ParamsValidToken) (*ParamsJwtData, error)
+	RefreshTokens(context.Context, *ParamsRefreshTokens) (*RefreshTokens, error)
 }
