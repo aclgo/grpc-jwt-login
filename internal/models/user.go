@@ -18,6 +18,7 @@ type User struct {
 	Password  string    `json:"password"`
 	Email     string    `json:"email"`
 	Role      string    `json:"role"`
+	Verified  string    `json:"verified" db:"verified"`
 	CreatedAt time.Time `json:"created_at,omitempty" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at,omitempty" db:"updated_at"`
 }

@@ -195,6 +195,7 @@ func (u *userUC) Update(ctx context.Context, params *user.ParamsUpdateUser) (*us
 			Lastname:  params.Lastname,
 			Password:  params.Password,
 			Email:     params.Email,
+			Verified:  params.Verified,
 			UpdatedAt: time.Now(),
 		},
 	)

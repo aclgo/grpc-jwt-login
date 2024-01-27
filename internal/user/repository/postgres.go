@@ -62,6 +62,7 @@ func (p *postgresRepo) Update(ctx context.Context, user *models.User) (*models.U
 		user.Password,
 		user.Email,
 		user.UpdatedAt,
+		user.Verified,
 		user.UserID,
 	).StructScan(&updatedUser)
 

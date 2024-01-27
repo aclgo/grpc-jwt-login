@@ -31,6 +31,7 @@ type ParamsUpdateUser struct {
 	Lastname  string
 	Password  string
 	Email     string
+	Verified  string
 	UpdatedAt time.Time
 }
 
@@ -48,6 +49,7 @@ type ParamsOutputUser struct {
 	Password  string
 	Email     string
 	Role      string
+	Verified  string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -64,6 +66,7 @@ func Dto(user *models.User) *ParamsOutputUser {
 		Password:  "",
 		Email:     user.Email,
 		Role:      user.Role,
+		Verified:  user.Verified,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	}

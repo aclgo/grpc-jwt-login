@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 
 	"github.com/go-redis/redis"
 	"google.golang.org/grpc/codes"
@@ -20,8 +21,9 @@ var ErrNoCtxMetaData = errors.New("no ctx metadata")
 var ErrInvalidToken = errors.New("invalid token")
 
 func ParseGRPCErrors(err error) codes.Code {
+	// fmt.Println(err, "my error")
 	switch {
-	case errors.Is(err, sql.ErrNoRows):
+	case errors.Is(err, sql.ErrNoRows) || strings.Contains(err.Error(), sql.ErrNoRows.Error()):
 		return codes.NotFound
 	case errors.Is(err, redis.Nil):
 		return codes.NotFound
