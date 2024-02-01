@@ -2,7 +2,7 @@ package repository
 
 const (
 	queryAddUser = `INSERT INTO users (user_id, name, last_name, password, email,
-	role, verified, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+	role, verified, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
 	RETURNING user_id, name, last_name, password, email, role, created_at, updated_at`
 
 	queryByID = `select user_id, name, last_name, password, email, role, verified, created_at,
