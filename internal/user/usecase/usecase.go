@@ -93,6 +93,10 @@ func (u *userUC) Login(ctx context.Context, email string, password string) (*mod
 
 	// fmt.Println("compare pass")
 
+	if foundUser.Verified == "no" {
+		return nil, user.ErrUserNotVerified{}
+	}
+
 	if err := u.userRepoCache.Set(ctx, foundUser); err != nil {
 		u.logger.Warn("Login.Set: %v", err)
 	}

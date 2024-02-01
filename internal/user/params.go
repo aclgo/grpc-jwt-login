@@ -90,3 +90,10 @@ type RefreshTokens struct {
 	AccessToken  string
 	RefreshToken string
 }
+
+type ErrUserNotVerified struct {
+}
+
+func (e ErrUserNotVerified) Error() string {
+	return "user not verified"
+}
