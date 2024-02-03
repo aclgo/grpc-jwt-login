@@ -27,8 +27,6 @@ func (p *postgresRepo) Add(ctx context.Context, user *models.User) (*models.User
 		user.Password,
 		user.Email,
 		user.Role,
-		user.CreatedAt,
-		user.UpdatedAt,
 		user.Verified,
 	).StructScan(&createdUser)
 
