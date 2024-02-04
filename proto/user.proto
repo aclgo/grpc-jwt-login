@@ -79,6 +79,13 @@ message UpdateResponse {
     User user = 1;
 }
 
+message DeleteRequest {
+    string id = 1;
+}
+
+message DeleteResponse {
+}
+
 message ValidateTokenRequest {
     string token = 1;
 }
@@ -105,6 +112,7 @@ service UserService {
     rpc FindById(FindByIdRequest) returns (FindByIdResponse);
     rpc FindByEmail(FindByEmailRequest) returns (FindByEmailResponse);
     rpc Update(UpdateRequest) returns (UpdateResponse);
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
     rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
     rpc RefreshTokens(RefreshTokensRequest) returns (RefreshTokensResponse);
 }

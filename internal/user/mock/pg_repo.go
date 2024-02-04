@@ -101,3 +101,22 @@ func (m *MockUserPGRepoRecorder) Update(ctx context.Context, user *models.User) 
 		user,
 	)
 }
+
+func (m *MockUserPGRepo) Delete(ctx context.Context, userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", ctx, userID)
+	ret0, _ := ret[0].(error)
+
+	return ret0
+}
+
+func (m *MockUserPGRepoRecorder) Delete(ctx context.Context, userID string) *gomock.Call {
+	m.mock.ctrl.T.Helper()
+	return m.mock.ctrl.RecordCallWithMethodType(
+		m.mock,
+		"Delete",
+		reflect.TypeOf((*MockUserPGRepo)(nil).Delete),
+		ctx,
+		userID,
+	)
+}

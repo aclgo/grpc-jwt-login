@@ -11,6 +11,7 @@ type UserRepoDatabase interface {
 	FindByID(context.Context, string) (*models.User, error)
 	FindByEmail(context.Context, string) (*models.User, error)
 	Update(context.Context, *models.User) (*models.User, error)
+	Delete(ctx context.Context, userID string) error
 }
 
 type UserRepoCache interface {
@@ -24,6 +25,7 @@ type UserUC interface {
 	FindByID(context.Context, string) (*ParamsOutputUser, error)
 	FindByEmail(context.Context, string) (*ParamsOutputUser, error)
 	Update(context.Context, *ParamsUpdateUser) (*ParamsOutputUser, error)
+	Delete(context.Context, *ParamsDeleteUser) error
 	Login(context.Context, string, string) (*models.Tokens, error)
 	Logout(context.Context, string, string) error
 	ValidToken(context.Context, *ParamsValidToken) (*ParamsJwtData, error)

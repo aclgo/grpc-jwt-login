@@ -44,3 +44,7 @@ func (u *User) ComparePass(password string) error {
 
 	return nil
 }
+
+type ParamsDeleteUser struct {
+	userID string
+}

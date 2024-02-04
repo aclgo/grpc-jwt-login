@@ -143,6 +143,18 @@ func (us *UserService) Update(ctx context.Context, req *proto.UpdateRequest) (*p
 	}, nil
 }
 
+func (us *UserService) Delete(ctx context.Context, req *proto.DeleteRequest) (*proto.DeleteResponse, error) {
+	err := us.userUC.Delete(ctx, &user.ParamsDeleteUser{
+		UserID: req.Id,
+	})
+
+	if err != nil {
+		return nil, status.Errorf(grpc_errors.ParseGRPCErrors(err), "Delete.Delete: %v", err)
+	}
+
+	return &proto.DeleteResponse{}, nil
+}
+
 func (us *UserService) ValidateToken(ctx context.Context, req *proto.ValidateTokenRequest) (*proto.ValidateTokenResponse, error) {
 	resp, err := us.userUC.ValidToken(ctx, &user.ParamsValidToken{AccessToken: req.Token})
 	if err != nil {

@@ -81,6 +81,10 @@ type ParamsValidToken struct {
 	AccessToken string
 }
 
+type ParamsDeleteUser struct {
+	UserID string
+}
+
 type ParamsRefreshTokens struct {
 	AccessToken  string
 	RefreshToken string

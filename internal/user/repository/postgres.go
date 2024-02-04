@@ -71,3 +71,11 @@ func (p *postgresRepo) Update(ctx context.Context, user *models.User) (*models.U
 
 	return &updatedUser, nil
 }
+
+func (p *postgresRepo) Delete(ctx context.Context, userID string) error {
+	if _, err := p.db.Exec(queryDelete, userID); err != nil {
+		return err
+	}
+
+	return nil
+}

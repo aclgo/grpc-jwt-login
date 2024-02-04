@@ -14,4 +14,6 @@ const (
 	queryUpdate = `update "users" set "name" = COALESCE($1, "name"), "last_name" = COALESCE($2, "last_name"),
 	"password" = COALESCE($3, "password"), "email" = COALESCE($4, "email"), "verified" = COALESCE($5, "verified")
 	"updated_at" = COALESCE($6, "updated_at") where user_id=$7`
+
+	queryDelete = `delete from users where user_id=$1`
 )

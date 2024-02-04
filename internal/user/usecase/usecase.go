@@ -212,6 +212,10 @@ func (u *userUC) Update(ctx context.Context, params *user.ParamsUpdateUser) (*us
 	return user.Dto(newUser), nil
 }
 
+func (u *userUC) Delete(ctx context.Context, params *user.ParamsDeleteUser) error {
+	return u.userRepoDatabase.Delete(ctx, params.UserID)
+}
+
 func (u *userUC) ValidToken(ctx context.Context, params *user.ParamsValidToken) (*user.ParamsJwtData, error) {
 	claims, err := u.jwtSession.ValidToken(ctx, params.AccessToken)
 	if err != nil && !errors.Is(err, redis.Nil) {
